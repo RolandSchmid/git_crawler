@@ -1,3 +1,4 @@
+import codecs
 import os
 import re
 from queue import Empty, Queue
@@ -85,11 +86,11 @@ class WorkerGit(AbstractThread):
     def __parse_file(file):
         words = []
         try:
-            with open(file, 'r', encoding='utf-8') as infile:
+            with codecs.open(file, "r", encoding='utf-8', errors='ignore') as infile:
                 lines = infile.readlines()
             for line in lines:
                 # Remove special characters
                 words += re.findall(r"[\w']+", line)
         except UnicodeDecodeError as e:
-            logger.error("UnicodeDecodeError: " + file)
+            logger.error("UnicodeDecodeError: " + str(e) + " " + file)
         return words
