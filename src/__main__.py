@@ -15,7 +15,7 @@ logger.setLevel(logging.DEBUG)
 pipeline = Pipeline(GitHubSpider, Config.get_n_git_threads(), Config.get_n_file_threads(), WorkerFile)
 
 
-def loadCollection(url):
+def pull_collection(url):
     # Load repositories from collection
     repo_urls = pipeline.search_collections([url])
     # Save repositories
@@ -24,20 +24,20 @@ def loadCollection(url):
     return repo_urls
 
 
-def loadRepository(url, file_ending_whitelist):
+def pull_repository(url, file_ending_whitelist):
     # Load single repository
-    repos = pipeline.clone_repositories([url], file_ending_whitelist)
+    return pipeline.clone_repositories([url], file_ending_whitelist)
 
 
-def loadRepositoriesFile(filename, file_ending_whitelist):
+def pull_repositories(filename, file_ending_whitelist):
     # Git repositories
-    with open(Config.get_dir_data() + 'repos.json', 'r', encoding='utf-8') as infile:
+    with open(Config.get_dir_data() + filename, 'r', encoding='utf-8') as infile:
         repo_urls = json.loads(''.join(infile.readlines()))
-    repos = pipeline.clone_repositories(repo_urls, file_ending_whitelist)
+    return pipeline.clone_repositories(repo_urls, file_ending_whitelist)
 
 
 file_ending_white = {'json', 'md', 'js'}
 
-# loadCollection('collections/front-end-javascript-frameworks')
-# loadRepository('leonardomso/33-js-concepts', file_ending_white)
-# loadRepositoriesFile('repos.json', file_ending_white)
+# pull_collection('collections/front-end-javascript-frameworks')
+# pull_repository('leonardomso/33-js-concepts', file_ending_white)
+# pull_repositories('repos.json', file_ending_white)
