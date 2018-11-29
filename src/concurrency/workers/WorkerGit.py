@@ -53,7 +53,8 @@ class WorkerGit(AbstractThread):
         self.queue_repositories.task_done()
 
     def __git_pull(self, repository):
-        path = os.path.join(Config.get_dir_repos(), Config.get_timestamp(), repository.encode_url())
+        # The \\?\ Prefix is used for paths longer than 260 characters
+        path = "\\\\?\\" + os.path.normpath(os.path.join(os.getcwd(), Config.get_dir_repos(), Config.get_timestamp(), repository.encode_url()))
         os.makedirs(path)
         try:
             # Clone repository
@@ -61,7 +62,7 @@ class WorkerGit(AbstractThread):
             self.__parse_repo(repository, path)
             return True
         except GitCommandError as e:
-            logger.error('Error: ' + str(e))
+            logger.error(str(e))
             return False
 
     def __parse_repo(self, repository, path):
