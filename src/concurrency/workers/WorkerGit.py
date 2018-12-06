@@ -2,6 +2,7 @@ import codecs
 import os
 import re
 from queue import Empty, Queue
+from stat import S_IWUSR
 from time import sleep
 
 import git
@@ -54,20 +55,22 @@ class WorkerGit(AbstractThread):
 
     def __git_pull(self, repository):
         # The \\?\ Prefix is used for paths longer than 260 characters
-        path = "\\\\?\\" + os.path.normpath(os.path.join(os.getcwd(), Config.get_dir_repos(), Config.get_timestamp(), repository.encode_url()))
-        os.makedirs(path)
+        directory = "\\\\?\\" + os.path.normpath(os.path.join(os.getcwd(), Config.get_dir_repos(), Config.get_timestamp(), repository.encode_url()))
+        os.makedirs(directory)
         try:
             # Clone repository
-            git.Git(path).clone(self.spider.main_url + repository.url + '.git')
-            self.__parse_repo(repository, path)
+            git.Git(directory).clone(self.spider.main_url + repository.url + '.git')
+            self.__parse_repo(repository, directory)
+            if Config.is_clean_repo():
+                self.__clean_repo(directory)
             return True
         except GitCommandError as e:
             logger.error(str(e))
             return False
 
-    def __parse_repo(self, repository, path):
+    def __parse_repo(self, repository, directory):
         queue_directories = Queue()
-        queue_directories.put(path)
+        queue_directories.put(directory)
         while not queue_directories.empty():
             folder = queue_directories.get()
             for file in os.listdir(folder):
@@ -95,3 +98,14 @@ class WorkerGit(AbstractThread):
         except UnicodeDecodeError as e:
             logger.error("UnicodeDecodeError: " + str(e) + " " + file)
         return words
+
+    @staticmethod
+    def __clean_repo(directory):
+        for root, dirs, files in os.walk(directory, topdown=False):
+            for name in files:
+                filename = os.path.join(root, name)
+                os.chmod(filename, S_IWUSR)
+                os.remove(filename)
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(directory)

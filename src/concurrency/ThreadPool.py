@@ -1,5 +1,7 @@
+import os
 from queue import Queue
 
+from Config import Config
 from concurrency.workers.WorkerGit import WorkerGit
 from tools.Logger import init_main
 from tools.Progressbar import std_out_tqdm, ProgressBar
@@ -34,6 +36,8 @@ class ThreadPool:
 
         self.progress_bar.close()
         self.logger.info('Finished reading repositories')
+        if Config.is_clean_repo():
+            os.rmdir("\\\\?\\" + os.path.normpath(os.path.join(os.getcwd(), Config.get_dir_repos(), Config.get_timestamp())))
 
         self.queue_out.join()
         self.worker_file.stop()
@@ -47,6 +51,5 @@ class ThreadPool:
         self.progress_bar = ProgressBar('Processing repositories', len(repo_urls))
         for i in range(self.n_git_threads):
             # self.logger.debug('New WorkerRepository: ID=%s' % i)
-            w = WorkerGit(self.spider, self.progress_bar, i, self.queue_repositories, self.queue_out,
-                          self.repositories, file_ending_whitelist)
+            w = WorkerGit(self.spider, self.progress_bar, i, self.queue_repositories, self.queue_out, self.repositories, file_ending_whitelist)
             self.workers_git.append(w)

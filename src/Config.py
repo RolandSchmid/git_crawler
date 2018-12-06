@@ -40,23 +40,40 @@ class Config:
 
     @classmethod
     def get_n_git_threads(cls):
-        return int(cls.get_config_param('threads', 'n_git_threads', str(default_n_git_threads)))
+        return cls.get_config_int('threads', 'n_git_threads', str(default_n_git_threads))
 
     @classmethod
     def get_n_file_threads(cls):
-        return int(cls.get_config_param('threads', 'n_file_threads', str(default_n_file_threads)))
+        return cls.get_config_int('threads', 'n_file_threads', str(default_n_file_threads))
 
     @classmethod
-    def get_config_param(cls, section, option, default=""):
-        if not config.has_section(section):
-            config[section] = {option: default}
-            with open(dir_root + ini_name, 'w') as configfile:
-                config.write(configfile)
-        if not config.has_option(section, option):
-            config[section][option] = default
-            with open(dir_root + ini_name, 'w') as configfile:
-                config.write(configfile)
+    def is_clean_repo(cls):
+        return cls.get_config_bool('cleanup', 'clean_repos', True)
+
+    @classmethod
+    def get_config_param(cls, section, option, default):
+        cls.create_if_not_exists(section, option, default)
         return config[section].get(option, default)
+
+    @classmethod
+    def get_config_int(cls, section, option, default):
+        cls.create_if_not_exists(section, option, default)
+        return config[section].getint(option, default)
+
+    @classmethod
+    def get_config_bool(cls, section, option, default):
+        cls.create_if_not_exists(section, option, default)
+        return config[section].getboolean(option, default)
+
+    @classmethod
+    def create_if_not_exists(cls, section, option, default):
+        if not config.has_section(section) or not config.has_option(section, option):
+            if not config.has_section(section):
+                config[section] = {option: default}
+            if not config.has_option(section, option):
+                config[section][option] = default
+        with open(dir_root + ini_name, 'w') as configfile:
+            config.write(configfile)
 
 
 # Init values
@@ -65,6 +82,7 @@ Config.get_dir_out()
 Config.get_dir_repos()
 Config.get_n_git_threads()
 Config.get_n_file_threads()
+Config.is_clean_repo()
 
 # Create repos folder
 if not os.path.exists(Config.get_dir_repos()):
